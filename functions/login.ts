@@ -38,8 +38,6 @@ export const onRequestPost: PagesFunction = async ({ request }) => {
   const username = formData.get('username')
   const password = formData.get('password')
 
-  console.log({ username, password })
-
   if (username === 'abc' && password === '123') {
     const url = new URL(request.url)
     const response = Response.redirect(url.protocol + url.host)

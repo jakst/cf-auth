@@ -1,6 +1,7 @@
 import { parse } from 'cookie'
+import sentryPlugin from '@cloudflare/pages-plugin-sentry'
 
-export const onRequest: PagesFunction = async ({ next, request }) => {
+export const auth: PagesFunction = async ({ next, request }) => {
   const cookies = parse(request.headers.get('Cookie') || '')
   const value = cookies['AUTH_COOKIE']
 
@@ -14,3 +15,14 @@ export const onRequest: PagesFunction = async ({ next, request }) => {
 
   return next()
 }
+
+export const sentry: PagesFunction<{
+  SENTRY_DSN: string
+}> = (context) => {
+  const { SENTRY_DSN } = context.env
+  if (SENTRY_DSN) return sentryPlugin({ dsn: SENTRY_DSN })(context)
+
+  return context.next()
+}
+
+export const onRequest = [sentry, auth]
