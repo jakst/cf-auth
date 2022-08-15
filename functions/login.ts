@@ -57,20 +57,23 @@ export const onRequestPost: PagesFunction<{ JWT_SECRET: string }> = async ({
 
     const headers = new Headers({
       Location: url.origin,
-      ['Set-Cookie']: [
-        serialize('JWT_P1P2', `${jwtPartHeader}.${jwtPartBody}`, {
-          sameSite: true,
-          secure: true,
-          maxAge: 60 * 60 * 24 * 30, // 30 days
-        }),
-        serialize('JWT_SIG', jwtPartSignature, {
-          sameSite: true,
-          secure: true,
-          httpOnly: true,
-          maxAge: 60 * 60 * 24 * 30, // 30 days
-        }),
-      ].join(';,'),
+      ['Set-Cookie']: serialize('JWT_P1P2', `${jwtPartHeader}.${jwtPartBody}`, {
+        sameSite: true,
+        secure: true,
+        maxAge: 60 * 60 * 24 * 30, // 30 days
+      }),
     })
+
+    // Append to allow more than one value for the Set-Cookie header
+    headers.append(
+      'Set-Cookie',
+      serialize('JWT_SIG', jwtPartSignature, {
+        sameSite: true,
+        secure: true,
+        httpOnly: true,
+        maxAge: 60 * 60 * 24 * 30, // 30 days
+      })
+    )
 
     return new Response(null, {
       status: 302,
