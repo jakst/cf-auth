@@ -7,7 +7,7 @@ export const auth: PagesFunction = async ({ next, request }) => {
 
   const url = new URL(request.url)
 
-  if (!value && url.pathname !== '/login') {
+  if (!value && url.pathname !== '/login' && url.pathname !== '/favicon.ico') {
     return Response.redirect(url.origin + '/login')
   } else if (value && url.pathname === '/login') {
     return Response.redirect(url.origin)
