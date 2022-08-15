@@ -69,7 +69,7 @@ export const onRequestPost: PagesFunction<{ JWT_SECRET: string }> = async ({
           httpOnly: true,
           maxAge: 60 * 60 * 24 * 30, // 30 days
         }),
-      ].join(','),
+      ].join(';,'),
     })
 
     return new Response(null, {
