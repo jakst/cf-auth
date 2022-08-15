@@ -8,9 +8,9 @@ export const auth: PagesFunction = async ({ next, request }) => {
   const url = new URL(request.url)
 
   if (!value && url.pathname !== '/login') {
-    return Response.redirect(url.protocol + url.host + '/login')
+    return Response.redirect(url.origin + '/login')
   } else if (value && url.pathname === '/login') {
-    return Response.redirect(url.protocol + url.host)
+    return Response.redirect(url.origin)
   }
 
   return next()

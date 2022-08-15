@@ -40,7 +40,7 @@ export const onRequestPost: PagesFunction = async ({ request }) => {
 
   if (username === 'abc' && password === '123') {
     const url = new URL(request.url)
-    const response = Response.redirect(url.protocol + url.host)
+    const response = Response.redirect(url.origin)
     response.headers.set(
       'Set-Cookie',
       serialize('AUTH_COOKIE', 'abc123', {
