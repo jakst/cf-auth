@@ -40,19 +40,22 @@ export const onRequestPost: PagesFunction = async ({ request }) => {
 
   if (username === 'abc' && password === '123') {
     const url = new URL(request.url)
-    const response = Response.redirect(url.origin).clone()
 
-    response.headers.set(
-      'Set-Cookie',
-      serialize('AUTH_COOKIE', 'abc123', {
+    const headers = new Headers({
+      Location: url.origin,
+      ['Set-Cookie']: serialize('AUTH_COOKIE', 'abc123', {
         httpOnly: true,
         sameSite: true,
         maxAge: 60 * 60 * 24 * 30, // 30 days
-      })
-    )
+      }),
+    })
 
-    return response
+    return new Response(null, {
+      status: 302,
+      headers,
+    })
   }
 
-  return new Response(failed, { headers: { ['Content-Type']: 'text/html' } })
+  const headers = new Headers({ ['Content-Type']: 'text/html' })
+  return new Response(failed, { headers })
 }
