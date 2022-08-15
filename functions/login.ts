@@ -1,6 +1,14 @@
 import { serialize } from 'cookie'
+import { sign } from '@tsndr/cloudflare-worker-jwt'
 
-const html = (failed: boolean) => `
+let failed: string | null = null
+let passed: string | null = null
+
+const html = (wantFailed: boolean) => {
+  if (wantFailed && failed) return failed
+  if (!wantFailed && passed) return passed
+
+  return `
 <!DOCTYPE html>
 
 <html lang="en">
@@ -16,7 +24,7 @@ const html = (failed: boolean) => `
       <input type="submit" value="Login" />
 
       ${
-        failed
+        wantFailed
           ? '<br /><span style="color:red;">Wrong username or password</span>'
           : ''
       }
@@ -24,30 +32,44 @@ const html = (failed: boolean) => `
   </body>
 </html>
 `
-
-const failed = html(true)
-const passed = html(false)
-
-export const onRequestGet: PagesFunction = async () => {
-  return new Response(passed, { headers: { ['Content-Type']: 'text/html' } })
 }
 
-export const onRequestPost: PagesFunction = async ({ request }) => {
+export const onRequestGet: PagesFunction = async () => {
+  return new Response(html(false), {
+    headers: { ['Content-Type']: 'text/html' },
+  })
+}
+
+export const onRequestPost: PagesFunction<{ JWT_SECRET: string }> = async ({
+  request,
+  env,
+}) => {
   const formData = await request.formData()
 
   const username = formData.get('username')
   const password = formData.get('password')
 
   if (username === 'abc' && password === '123') {
+    const jwtString = await sign({ username }, env.JWT_SECRET)
+    const [jwtPartHeader, jwtPartBody, jwtPartSignature] = jwtString.split('.')
+
     const url = new URL(request.url)
 
     const headers = new Headers({
       Location: url.origin,
-      ['Set-Cookie']: serialize('AUTH_COOKIE', 'abc123', {
-        httpOnly: true,
-        sameSite: true,
-        maxAge: 60 * 60 * 24 * 30, // 30 days
-      }),
+      ['Set-Cookie']: [
+        serialize('JWT_P1P2', `${jwtPartHeader}.${jwtPartBody}`, {
+          sameSite: true,
+          secure: true,
+          maxAge: 60 * 60 * 24 * 30, // 30 days
+        }),
+        serialize('JWT_SIG', jwtPartSignature, {
+          sameSite: true,
+          secure: true,
+          httpOnly: true,
+          maxAge: 60 * 60 * 24 * 30, // 30 days
+        }),
+      ].join(','),
     })
 
     return new Response(null, {
@@ -57,5 +79,5 @@ export const onRequestPost: PagesFunction = async ({ request }) => {
   }
 
   const headers = new Headers({ ['Content-Type']: 'text/html' })
-  return new Response(failed, { headers })
+  return new Response(html(true), { headers })
 }
